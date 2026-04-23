@@ -1,31 +1,28 @@
-'''
-Starting Engineering Calculator
-=================================
+"""
+Инженерный калькулятор на PyQt5
+Запуск: python main.py
+Зависимости: pip install PyQt5
+"""
 
-Main entry point for the application
-
-Запуск:
-    python main.py
-'''
-
-# Прямой импорт чтобы избежать проблем с модулями
 import sys
-from pathlib import Path
-
-# Добавляем папку проекта в путь поиска
-project_root = Path(__file__).parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
-
-# Теперь импортируем UI
-from calculator.ui import EngineeringCalculatorApp
-
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPalette, QColor
+import engineering_calculator as calc
 
 def main():
-    '''Run the calculator application'''
-    app = EngineeringCalculatorApp()
-    app.mainloop()
+    app = QApplication(sys.argv)
+    app.setStyle("Fusion")
 
+    theme = calc.THEMES[calc.CURRENT_THEME]
+    palette = QPalette()
+    palette.setColor(QPalette.Window, QColor(theme['DARK_BG']))
+    palette.setColor(QPalette.WindowText, QColor(theme['TEXT_WHITE']))
+    app.setPalette(palette)
+
+    win = calc.EngCalc()
+    win.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
     main()

@@ -1,63 +1,67 @@
-# Python Calculator by Mr_Hronosin
+# Инженерный калькулятор
 
-## English
+Модульный инженерный калькулятор на PyQt5 с поддержкой локализации и тем.
 
-### Overview
-A modern engineering calculator written in Python with a modular design. It supports safe math evaluation, conversion tools, history management, and a compact GUI.
+## Особенности
 
-### Features
-- Safe expression evaluation with support for complex numbers
-- Trigonometric, logarithmic, and exponential functions
-- Unit converters for distance, temperature, and angles
-- History storage with JSON export/import
-- Multi-language interface support
+- **Модульная архитектура**: Код разделен на отдельные модули для лучшей поддерживаемости
+- **Локализация**: Поддержка русского и английского языков
+- **Темы**: Темная и светлая темы интерфейса
+- **История вычислений**: Сохранение и загрузка истории между сессиями
+- **Сохранение состояния**: Автоматическое сохранение текущего выражения, памяти и настроек
+- **Горячие клавиши**: Ctrl+C (копировать результат), Ctrl+V (вставить), Ctrl+H (очистить историю)
+- **Инженерные функции**: Тригонометрия, логарифмы, константы, память и т.д.
 
-### Installation
-1. Open terminal in the project folder.
-2. Run the app with:
-   ```bash
-   python main.py
-   ```
+## Установка
 
-### Usage
-- Enter any mathematical expression in the input field.
-- Use functions like `sin()`, `cos()`, `sqrt()`, `log()`, `factorial()`.
-- Use `^` for power, for example `2^3`.
-- Complex numbers are supported using `i` or `j`, for example `sqrt(-1)`.
+1. Установите зависимости:
+```bash
+pip install PyQt5
+```
 
-### Notes
-- The calculator is designed to be lightweight and modular.
-- Only built-in Python libraries are used.
-- The interface is simple and functional.
+2. Запустите калькулятор:
+```bash
+python main.py
+```
 
----
+## Структура проекта
 
-## Русский
+```
+calculator/
+├── __init__.py      # Пакет
+├── config.py        # Конфигурация, локализация, темы
+├── logic.py         # Логика вычислений
+├── styles.py        # Стили кнопок
+└── ui.py            # Пользовательский интерфейс
+main.py              # Точка входа
+README.md            # Документация
+```
 
-### Обзор
-Модульный инженерный калькулятор на Python с безопасным вычислением, конвертерами, историей и компактным интерфейсом.
+## Локализация
 
-### Возможности
-- Безопасное вычисление выражений с поддержкой комплексных чисел
-- Тригонометрические, логарифмические и экспоненциальные функции
-- Конвертеры единиц для расстояний, температур и углов
-- История вычислений с экспортом/импортом JSON
-- Поддержка нескольких языков интерфейса
+Установите переменную окружения `CALC_LANG` для выбора языка:
+- `ru` - русский (по умолчанию)
+- `en` - английский
 
-### Установка
-1. Откройте терминал в папке проекта.
-2. Запустите приложение:
-   ```bash
-   python main.py
-   ```
+```bash
+export CALC_LANG=en
+python main.py
+```
 
-### Использование
-- Введите математическое выражение в поле ввода.
-- Используйте функции `sin()`, `cos()`, `sqrt()`, `log()`, `factorial()`.
-- Для возведения в степень используйте `^`, например `2^3`.
-- Комплексные числа поддерживаются через `i` или `j`, например `sqrt(-1)`.
+## Горячие клавиши
 
-### Примечания
-- Калькулятор сделан лёгким и модульным.
-- Используются только стандартные библиотеки Python.
-- Интерфейс простой и удобный.
+- **Ctrl+C**: Копировать результат в буфер обмена
+- **Ctrl+V**: Вставить число из буфера обмена
+- **Ctrl+H**: Очистить историю
+- **Клавиатура**: Полная поддержка ввода с клавиатуры
+
+## Функции
+
+- Основные арифметические операции
+- Тригонометрические функции (sin, cos, tan) с поддержкой градусов/радианов
+- Гиперболические функции
+- Логарифмы (log, ln, log2)
+- Константы (π, e, φ)
+- Память (MC, MR, M+, M-)
+- Инженерные функции (sqrt, cbrt, pow, etc.)
+- История вычислений с сохранением между сессиями
