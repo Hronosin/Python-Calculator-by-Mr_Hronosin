@@ -200,7 +200,7 @@ class EngCalcUI(QMainWindow):
         add(btn_inv, 0, 1)
 
         btn_x2 = make_btn(get_text('square'), "fn")
-        btn_x2.clicked.connect(lambda: self.apply_fn("pow2"))
+        btn_x2.clicked.connect(lambda: self.input_fn("pow2"))
         add(btn_x2, 0, 2)
 
         btn_xn = make_btn(get_text('power'), "fn")
@@ -208,7 +208,7 @@ class EngCalcUI(QMainWindow):
         add(btn_xn, 0, 3)
 
         btn_pct = make_btn(get_text('pct'), "fn")
-        btn_pct.clicked.connect(lambda: self.apply_fn("pct"))
+        btn_pct.clicked.connect(lambda: self.input_fn("pct"))
         add(btn_pct, 0, 4)
 
         btn_ac = make_btn(get_text('clear'), "clr")
@@ -218,7 +218,7 @@ class EngCalcUI(QMainWindow):
         # ── Строка 1: тригонометрия ────────────────────────────────────────
         for col, fn in enumerate(["sin", "cos", "tan", "log", "ln"]):
             b = make_btn(get_text(fn), "fn")
-            b.clicked.connect(lambda _, f=fn: self.apply_fn(f))
+            b.clicked.connect(lambda _, f=fn: self.input_fn(f))
             add(b, 1, col)
 
         btn_del = make_btn(get_text('delete'), "clr")
@@ -231,7 +231,7 @@ class EngCalcUI(QMainWindow):
             ("log2","log2"),("exp","exp"),("sqrt","sqrt")
         ]):
             b = make_btn(get_text(lbl), "fn")
-            b.clicked.connect(lambda _, f=fn: self.apply_fn(f))
+            b.clicked.connect(lambda _, f=fn: self.input_fn(f))
             add(b, 2, col)
 
         # ── Строка 3: константы + доп. ────────────────────────────────────
@@ -244,7 +244,7 @@ class EngCalcUI(QMainWindow):
             if col < 3:
                 b.clicked.connect(lambda _, c=fn: self.input_const(c))
             else:
-                b.clicked.connect(lambda _, f=fn: self.apply_fn(f))
+                b.clicked.connect(lambda _, f=fn: self.input_fn(f))
             add(b, 3, col)
 
         # ── Строка 4: память ─────────────────────────────────────────────
@@ -290,11 +290,11 @@ class EngCalcUI(QMainWindow):
             add(b, 7, col)
 
         btn_ceil = make_btn(get_text('ceil'), "fn")
-        btn_ceil.clicked.connect(lambda: self.apply_fn("ceil"))
+        btn_ceil.clicked.connect(lambda: self.input_fn("ceil"))
         add(btn_ceil, 7, 3)
 
         btn_rnd = make_btn(get_text('round'), "fn")
-        btn_rnd.clicked.connect(lambda: self.apply_fn("round"))
+        btn_rnd.clicked.connect(lambda: self.input_fn("round"))
         add(btn_rnd, 7, 5)
 
         for col, dig in enumerate(["1", "2", "3"]):
@@ -307,7 +307,7 @@ class EngCalcUI(QMainWindow):
         add(btn_eq, 8, 3, 1, 2)
 
         btn_cbrt = make_btn(get_text('cbrt'), "fn")
-        btn_cbrt.clicked.connect(lambda: self.apply_fn("cbrt"))
+        btn_cbrt.clicked.connect(lambda: self.input_fn("cbrt"))
         add(btn_cbrt, 8, 5)
 
         btn_0 = make_btn("0", "num")
@@ -319,7 +319,7 @@ class EngCalcUI(QMainWindow):
         add(btn_dot, 9, 2)
 
         btn_pow10 = make_btn(get_text('pow10'), "fn")
-        btn_pow10.clicked.connect(lambda: self.apply_fn("pow10"))
+        btn_pow10.clicked.connect(lambda: self.input_fn("pow10"))
         add(btn_pow10, 9, 3)
 
         btn_ans = make_btn(get_text('ans'), "fn")
@@ -408,6 +408,10 @@ class EngCalcUI(QMainWindow):
 
     def toggle_sign(self):
         self._update_display(self.logic.toggle_sign())
+
+    def input_fn(self, fn):
+        """Добавляет функцию в выражение как текст"""
+        self._update_display(self.logic.input_fn(fn))
 
     def apply_fn(self, fn):
         val, expr = self.logic.apply_fn(fn)

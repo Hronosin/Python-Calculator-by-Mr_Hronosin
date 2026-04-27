@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QFont, QColor, QPalette, QIcon
+from units_converter import UnitsConverter
 
 # ─── Конфигурация ─────────────────────────────────────────────────────────────
 LANGUAGE = os.getenv('CALC_LANG', 'ru')
@@ -62,6 +63,7 @@ LOCALES = {
         'sin': 'sin',
         'cos': 'cos',
         'tan': 'tan',
+        'cot': 'ctg',
         'sinh': 'sinh',
         'cosh': 'cosh',
         'tanh': 'tanh',
@@ -85,6 +87,8 @@ LOCALES = {
         'deg_rad': 'DEG/RAD',
         'inv_toggle': 'INV',
         'pi_half': 'π/2',
+        'units': 'Конвертер',
+        'units_title': 'Конвертер единиц',
     },
     'en': {
         'window_title': 'Engineering Calculator',
@@ -126,6 +130,7 @@ LOCALES = {
         'sin': 'sin',
         'cos': 'cos',
         'tan': 'tan',
+        'cot': 'cot',
         'sinh': 'sinh',
         'cosh': 'cosh',
         'tanh': 'tanh',
@@ -149,6 +154,8 @@ LOCALES = {
         'deg_rad': 'DEG/RAD',
         'inv_toggle': 'INV',
         'pi_half': 'π/2',
+        'units': 'Converter',
+        'units_title': 'Unit Converter',
     }
 }
 
@@ -484,10 +491,14 @@ class EngCalc(QMainWindow):
         add(btn_ac, 0, 5)
 
         # ── Строка 1: тригонометрия ────────────────────────────────────────
-        for col, fn in enumerate(["sin", "cos", "tan", "log", "ln"]):
+        for col, fn in enumerate(["sin", "cos", "tan", "log"]):
             b = make_btn(get_text(fn), "fn")
             b.clicked.connect(lambda _, f=fn: self.apply_fn(f))
             add(b, 1, col)
+
+        btn_cot = make_btn(get_text('cot'), "fn")
+        btn_cot.clicked.connect(lambda: self.apply_fn("cot"))
+        add(btn_cot, 1, 4)
 
         btn_del = make_btn(get_text('delete'), "clr")
         btn_del.clicked.connect(self.del_last)
@@ -496,7 +507,7 @@ class EngCalc(QMainWindow):
         # ── Строка 2: гиперболические / доп. ─────────────────────────────
         for col, (key, fn) in enumerate([
             ("sinh","sinh"),("cosh","cosh"),("tanh","tanh"),
-            ("log2","log2"),("exp","exp"),("sqrt","sqrt")
+            ("log2","log2"),("exp","exp"),("ln","ln")
         ]):
             b = make_btn(get_text(key), "fn")
             b.clicked.connect(lambda _, f=fn: self.apply_fn(f))
@@ -505,7 +516,7 @@ class EngCalc(QMainWindow):
         # ── Строка 3: константы + доп. ────────────────────────────────────
         for col, (key, fn) in enumerate([
             ("pi","PI"),("e_const","E"),("phi","PHI"),
-            ("abs","abs"),("fact","fact"),("cbrt","cbrt")
+            ("sqrt","sqrt"),("fact","fact"),("cbrt","cbrt")
         ]):
             kind = "const" if col < 3 else "fn"
             b = make_btn(get_text(key), kind)
@@ -675,6 +686,7 @@ class EngCalc(QMainWindow):
         "sin":   lambda s, x: math.sin(s._to_rad(x)) if not s.inv_mode else s._from_rad(math.asin(x)),
         "cos":   lambda s, x: math.cos(s._to_rad(x)) if not s.inv_mode else s._from_rad(math.acos(x)),
         "tan":   lambda s, x: math.tan(s._to_rad(x)) if not s.inv_mode else s._from_rad(math.atan(x)),
+        "cot":   lambda s, x: (1/math.tan(s._to_rad(x))) if not s.inv_mode else s._from_rad(math.atan(1/x)),
         "sinh":  lambda s, x: math.sinh(x)  if not s.inv_mode else math.asinh(x),
         "cosh":  lambda s, x: math.cosh(x)  if not s.inv_mode else math.acosh(x),
         "tanh":  lambda s, x: math.tanh(x)  if not s.inv_mode else math.atanh(x),
@@ -969,6 +981,11 @@ class EngCalc(QMainWindow):
         en_action.triggered.connect(lambda: self.change_lang('en'))
         lang_menu.addAction(en_action)
 
+        view_menu.addSeparator()
+        units_action = QAction(get_text('units'), self)
+        units_action.triggered.connect(self.show_units_converter)
+        view_menu.addAction(units_action)
+
     def change_theme(self, theme_name):
         save_theme(theme_name)
         QMessageBox.information(self, get_text('window_title'), get_text('restart_required'))
@@ -976,6 +993,10 @@ class EngCalc(QMainWindow):
     def change_lang(self, lang):
         save_language(lang)
         QMessageBox.information(self, get_text('window_title'), get_text('restart_required'))
+
+    def show_units_converter(self):
+        converter = UnitsConverter(self, theme, get_text)
+        converter.exec_()
 
     def keyPressEvent(self, event):
         key = event.key()

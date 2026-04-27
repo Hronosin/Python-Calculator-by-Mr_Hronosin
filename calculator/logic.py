@@ -106,7 +106,22 @@ class CalculatorLogic:
             self.expr = "-" + self.expr
         return self.expr
 
+    def input_fn(self, fn):
+        """Добавляет функцию в выражение как текст"""
+        if self.just_calc:
+            self.expr = ""; self.just_calc = False
+        self.expr += f"{fn}("
+        return self.expr
+
+    def input_fn(self, fn):
+        """Добавляет функцию в выражение как текст"""
+        if self.just_calc:
+            self.expr = ""; self.just_calc = False
+        self.expr += f"{fn}("
+        return self.expr
+
     def apply_fn(self, fn):
+        """Применяет функцию к последнему числу (для старых кнопок)"""
         if not self.expr and self.last_res is not None:
             self.expr = self._fmt(self.last_res)
         if not self.expr:
@@ -129,7 +144,44 @@ class CalculatorLogic:
             return None, None
         orig = self.expr
         try:
-            result = eval(self.expr, {"__builtins__": {}}, {})
+            # Преобразуем выражение: приводим функции к нижнему регистру
+            expr_to_calc = self.expr
+            functions = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "log", "ln", "log2", 
+                        "exp", "sqrt", "cbrt", "pow2", "pow10", "abs", "inv", "pct", 
+                        "floor", "ceil", "round", "fact", "PI", "E", "PHI"]
+            for func in functions:
+                expr_to_calc = expr_to_calc.replace(func.upper(), func)
+                expr_to_calc = expr_to_calc.replace(func.capitalize(), func)
+            
+            # Подготавливаем namespace с математическими функциями
+            safe_dict = {
+                "sin": lambda x: math.sin(self._to_rad(x)) if not self.inv_mode else self._from_rad(math.asin(x)),
+                "cos": lambda x: math.cos(self._to_rad(x)) if not self.inv_mode else self._from_rad(math.acos(x)),
+                "tan": lambda x: math.tan(self._to_rad(x)) if not self.inv_mode else self._from_rad(math.atan(x)),
+                "sinh": lambda x: math.sinh(x) if not self.inv_mode else math.asinh(x),
+                "cosh": lambda x: math.cosh(x) if not self.inv_mode else math.acosh(x),
+                "tanh": lambda x: math.tanh(x) if not self.inv_mode else math.atanh(x),
+                "log": lambda x: math.log10(x) if not self.inv_mode else 10**x,
+                "ln": lambda x: math.log(x) if not self.inv_mode else math.exp(x),
+                "log2": lambda x: math.log2(x),
+                "exp": lambda x: math.exp(x),
+                "sqrt": lambda x: math.sqrt(x),
+                "cbrt": lambda x: x ** (1/3) if x >= 0 else -((-x) ** (1/3)),
+                "pow2": lambda x: x ** 2,
+                "pow10": lambda x: 10 ** x,
+                "abs": lambda x: abs(x),
+                "inv": lambda x: 1 / x,
+                "pct": lambda x: x / 100,
+                "floor": lambda x: math.floor(x),
+                "ceil": lambda x: math.ceil(x),
+                "round": lambda x: round(x),
+                "fact": lambda x: float(math.factorial(int(x))),
+                "PI": math.pi,
+                "E": math.e,
+                "PHI": (1 + math.sqrt(5)) / 2,
+                "__builtins__": {}
+            }
+            result = eval(expr_to_calc, safe_dict)
             result = float(result)
             if not math.isfinite(result):
                 return str(result), orig + " ="
@@ -173,9 +225,9 @@ class CalculatorLogic:
             except Exception:
                 pass
         elif act == "inv":
-            return self.apply_fn("inv")
+            return self.input_fn("inv")
         elif act == "floor":
-            return self.apply_fn("floor")
+            return self.input_fn("floor")
         self.save_state()
         return self.expr
 
