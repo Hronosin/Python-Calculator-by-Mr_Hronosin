@@ -12,7 +12,23 @@ from PyQt5.QtGui import QFont
 
 class UnitsConverter(QDialog):
     """Dialog for converting units"""
-    
+
+    UNIT_LABELS = {
+        'm': 'meter', 'km': 'kilometer', 'cm': 'centimeter', 'mm': 'millimeter', 'μm': 'micrometer', 'nm': 'nanometer',
+        'in': 'inch', 'ft': 'foot', 'yd': 'yard', 'mi': 'mile', 'nmi': 'nautical_mile',
+        'kg': 'kilogram', 'g': 'gram', 'mg': 'milligram', 'μg': 'microgram', 'lb': 'pound', 'oz': 'ounce', 'st': 'stone', 't': 'tonne',
+        '°C': 'celsius', '°F': 'fahrenheit', 'K': 'kelvin',
+        's': 'second', 'ms': 'millisecond', 'μs': 'microsecond', 'ns': 'nanosecond', 'min': 'minute', 'h': 'hour', 'd': 'day', 'w': 'week', 'y': 'year',
+        'L': 'liter', 'mL': 'milliliter', 'μL': 'microliter', 'm³': 'cubic_meter', 'cm³': 'cubic_centimeter', 'in³': 'cubic_inch', 'km³': 'cubic_kilometer',
+        'gal': 'gallon', 'pt': 'pint', 'fl oz': 'fluid_ounce',
+        'm²': 'square_meter', 'km²': 'square_kilometer', 'cm²': 'square_centimeter', 'mm²': 'square_millimeter', 'in²': 'square_inch',
+        'ft²': 'square_foot', 'yd²': 'square_yard', 'acre': 'acre', 'ha': 'hectare', 'mi²': 'square_mile',
+        'm/s': 'meter_per_second', 'km/h': 'kilometer_per_hour', 'mph': 'mile_per_hour', 'kt': 'knot', 'ft/s': 'foot_per_second',
+        'J': 'joule', 'kJ': 'kilojoule', 'MJ': 'megajoule', 'cal': 'calorie', 'kcal': 'kilocalorie', 'Wh': 'watt_hour', 'kWh': 'kilowatt_hour', 'eV': 'electronvolt', 'BTU': 'btu',
+        'Pa': 'pascal', 'kPa': 'kilopascal', 'hPa': 'hectopascal', 'bar': 'bar', 'atm': 'atmosphere', 'mmHg': 'millimeter_of_mercury', 'psi': 'psi',
+        'N': 'newton', 'kN': 'kilonewton', 'dyn': 'dyne', 'kgf': 'kilogram_force', 'lbf': 'pound_force', 'pdl': 'poundal',
+    }
+
     def __init__(self, parent=None, theme=None, get_text=None):
         super().__init__(parent)
         self.theme = theme or {}
@@ -20,6 +36,20 @@ class UnitsConverter(QDialog):
         self.setWindowTitle(self.get_text("units_title"))
         self.setMinimumSize(500, 400)
         self.setup_ui()
+
+    def _get_unit_label(self, code):
+        label_key = self.UNIT_LABELS.get(code)
+        return self.get_text(label_key) if label_key else code
+
+    def _get_unit_tooltip(self, code):
+        label = self._get_unit_label(code)
+        return f"{code} — {label}" if label != code else code
+
+    def _set_unit_tooltips(self, combo):
+        for i in range(combo.count()):
+            unit = combo.itemText(i)
+            combo.setItemData(i, self._get_unit_tooltip(unit), Qt.ToolTipRole)
+        combo.setToolTip(self._get_unit_tooltip(combo.currentText()))
         
     def setup_ui(self):
         """Creates the interface"""
@@ -49,6 +79,7 @@ class UnitsConverter(QDialog):
         layout.addWidget(QLabel(self.get_text('from')), 0, 0)
         from_unit = QComboBox()
         from_unit.addItems(conversions.keys())
+        self._set_unit_tooltips(from_unit)
         layout.addWidget(from_unit, 0, 1)
         
         from_value = QLineEdit("1")
@@ -82,11 +113,15 @@ class UnitsConverter(QDialog):
             to_unit.clear()
             if text in conversions:
                 to_unit.addItems(conversions[text].keys())
+            self._set_unit_tooltips(to_unit)
+            to_unit.setToolTip(self._get_unit_tooltip(to_unit.currentText()))
             do_convert()
         
         from_unit.currentTextChanged.connect(update_to_units)
+        from_unit.currentTextChanged.connect(lambda text: from_unit.setToolTip(self._get_unit_tooltip(text)))
         from_value.textChanged.connect(do_convert)
         to_unit.currentTextChanged.connect(do_convert)
+        to_unit.currentTextChanged.connect(lambda text: to_unit.setToolTip(self._get_unit_tooltip(text)))
         
         update_to_units(from_unit.currentText())
         layout.setRowStretch(3, 1)

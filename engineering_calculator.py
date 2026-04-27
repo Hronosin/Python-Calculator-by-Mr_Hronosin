@@ -4,10 +4,12 @@
 Зависимости: pip install PyQt5
 """
 
+import ast
 import sys
 import math
 import os
 import json
+from decimal import Decimal, InvalidOperation, getcontext
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QGridLayout,
     QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
@@ -17,10 +19,14 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QFont, QColor, QPalette, QIcon
 from units_converter import UnitsConverter
+from extended_mode import ExtendedModeDialog
 
 # ─── Конфигурация ─────────────────────────────────────────────────────────────
 LANGUAGE = os.getenv('CALC_LANG', 'ru')
 CURRENT_THEME = 'dark'
+EXTENDED_MODE_ENABLED = False
+EXTENDED_MODE_FILE = os.path.join(os.path.dirname(__file__), 'extended_mode.txt')
+getcontext().prec = 50
 
 LOCALES = {
     'ru': {
@@ -34,6 +40,97 @@ LOCALES = {
         'lang_menu': 'Язык',
         'russian': 'Русский',
         'english': 'English',
+        'ukrainian': 'Українська',
+        'distance': 'Длина',
+        'weight': 'Вес',
+        'temperature': 'Температура',
+        'time': 'Время',
+        'volume': 'Объём',
+        'area': 'Площадь',
+        'speed': 'Скорость',
+        'energy': 'Энергия',
+        'pressure': 'Давление',
+        'force': 'Сила',
+        'from': 'От',
+        'to': 'К',
+        'meter': 'метр',
+        'kilometer': 'километр',
+        'centimeter': 'сантиметр',
+        'millimeter': 'миллиметр',
+        'micrometer': 'микрометр',
+        'nanometer': 'нанометр',
+        'inch': 'дюйм',
+        'foot': 'фут',
+        'yard': 'ярд',
+        'mile': 'миля',
+        'nautical_mile': 'морская миля',
+        'kilogram': 'килограмм',
+        'gram': 'грамм',
+        'milligram': 'миллиграмм',
+        'microgram': 'микрограмм',
+        'pound': 'фунт',
+        'ounce': 'унция',
+        'stone': 'стоун',
+        'tonne': 'тонна',
+        'celsius': 'градус Цельсия',
+        'fahrenheit': 'градус Фаренгейта',
+        'kelvin': 'кельвин',
+        'second': 'секунда',
+        'millisecond': 'миллисекунда',
+        'microsecond': 'микросекунда',
+        'nanosecond': 'наносекунда',
+        'minute': 'минута',
+        'hour': 'час',
+        'day': 'день',
+        'week': 'неделя',
+        'year': 'год',
+        'liter': 'литр',
+        'milliliter': 'миллилитр',
+        'microliter': 'микроли́тр',
+        'cubic_meter': 'кубический метр',
+        'cubic_centimeter': 'кубический сантиметр',
+        'cubic_inch': 'кубический дюйм',
+        'cubic_kilometer': 'кубический километр',
+        'gallon': 'галлон',
+        'pint': 'пинта',
+        'fluid_ounce': 'жидкая унция',
+        'square_meter': 'квадратный метр',
+        'square_kilometer': 'квадратный километр',
+        'square_centimeter': 'квадратный сантиметр',
+        'square_millimeter': 'квадратный миллиметр',
+        'square_inch': 'квадратный дюйм',
+        'square_foot': 'квадратный фут',
+        'square_yard': 'квадратный ярд',
+        'acre': 'акр',
+        'hectare': 'гектар',
+        'square_mile': 'квадратная миля',
+        'meter_per_second': 'метр в секунду',
+        'kilometer_per_hour': 'километр в час',
+        'mile_per_hour': 'миля в час',
+        'knot': 'узел',
+        'foot_per_second': 'фут в секунду',
+        'joule': 'джоуль',
+        'kilojoule': 'килоджоуль',
+        'megajoule': 'мегаджоуль',
+        'calorie': 'калория',
+        'kilocalorie': 'килокалория',
+        'watt_hour': 'ватт-час',
+        'kilowatt_hour': 'киловатт-час',
+        'electronvolt': 'электронвольт',
+        'btu': 'британская тепловая единица',
+        'pascal': 'паскаль',
+        'kilopascal': 'килопаскаль',
+        'hectopascal': 'гектопаскаль',
+        'bar': 'бар',
+        'atmosphere': 'атмосфера',
+        'millimeter_of_mercury': 'миллиметр ртутного столба',
+        'psi': 'фунт на квадратный дюйм',
+        'newton': 'ньютон',
+        'kilonewton': 'килоньюто́н',
+        'dyne': 'дин',
+        'kilogram_force': 'килограмм-сила',
+        'pound_force': 'фунт-сила',
+        'poundal': 'паундаль',
         'restart_required': 'Требуется перезапуск для применения изменений',
         'history_title': 'История',
         'clear_history': 'очистить',
@@ -89,6 +186,54 @@ LOCALES = {
         'pi_half': 'π/2',
         'units': 'Конвертер',
         'units_title': 'Конвертер единиц',
+        'extended_mode': 'Расширенный режим',
+        'extended_mode_title': 'Расширенный режим',
+        'pro_mode': 'Pro Mode',
+        'pro_mode_title': 'Pro Mode - Semiconductor Lifetime',
+        'semiconductor_lifetime': 'Время жизни полупроводника',
+        'usage_time': 'Время использования (часы)',
+        'current': 'Ток (A)',
+        'min_temp': 'Минимальная температура (°C)',
+        'max_temp': 'Максимальная температура (°C)',
+        'avg_temp': 'Средняя температура (°C)',
+        'lifetime_result': 'Примерное время жизни (часы)',
+        'remaining_lifetime': 'Оставшееся время жизни (часы)',
+        'formula_select': 'Формула',
+        'formula_expression': 'Выражение',
+        'compute': 'Вычислить',
+        'result': 'Результат',
+        'precision_note': 'Высокая точность до 30 знаков после запятой',
+        'current': 'Ток',
+        'resistance': 'Сопротивление',
+        'mass': 'Масса',
+        'velocity': 'Скорость',
+        'amount_substance': 'Количество вещества',
+        'temperature': 'Температура',
+        'gas_volume': 'Объём газа',
+        'formula_ohms_law': 'Закон Ома',
+        'formula_kinetic_energy': 'Кинетическая энергия',
+        'formula_ideal_gas_law': 'Уравнение Менделеева–Клапейрона',
+        'formula_mass_energy': 'Энергия массы',
+        'formula_molar_concentration': 'Молярная концентрация',
+        'formula_acceleration': 'Ускорение',
+        'formula_pressure_force': 'Давление от силы',
+        'formula_density': 'Плотность',
+        'formula_gravitational_force': 'Гравитационная сила',
+        'formula_potential_energy': 'Потенциальная энергия',
+        'formula_spring_energy': 'Энергия пружины',
+        'formula_wave_energy': 'Энергия волны',
+        'formula_work': 'Работа',
+        'formula_heat_capacity': 'Теплоёмкость',
+        'formula_power': 'Мощность',
+        'formula_ph': 'pH',
+        'height': 'Высота',
+        'spring_constant': 'Жёсткость пружины',
+        'volume_liters': 'Объём (л)',
+        'specific_heat_capacity': 'Удельная теплоёмкость',
+        'temperature_change': 'Изменение температуры',
+        'wavelength': 'Длина волны',
+        'hydrogen_ion_concentration': 'Концентрация ионов водорода',
+        'work': 'Работа',
     },
     'en': {
         'window_title': 'Engineering Calculator',
@@ -101,6 +246,97 @@ LOCALES = {
         'lang_menu': 'Language',
         'russian': 'Русский',
         'english': 'English',
+        'ukrainian': 'Ukrainian',
+        'distance': 'Distance',
+        'weight': 'Weight',
+        'temperature': 'Temperature',
+        'time': 'Time',
+        'volume': 'Volume',
+        'area': 'Area',
+        'speed': 'Speed',
+        'energy': 'Energy',
+        'pressure': 'Pressure',
+        'force': 'Force',
+        'from': 'From',
+        'to': 'To',
+        'meter': 'Meter',
+        'kilometer': 'Kilometer',
+        'centimeter': 'Centimeter',
+        'millimeter': 'Millimeter',
+        'micrometer': 'Micrometer',
+        'nanometer': 'Nanometer',
+        'inch': 'Inch',
+        'foot': 'Foot',
+        'yard': 'Yard',
+        'mile': 'Mile',
+        'nautical_mile': 'Nautical mile',
+        'kilogram': 'Kilogram',
+        'gram': 'Gram',
+        'milligram': 'Milligram',
+        'microgram': 'Microgram',
+        'pound': 'Pound',
+        'ounce': 'Ounce',
+        'stone': 'Stone',
+        'tonne': 'Tonne',
+        'celsius': 'Celsius',
+        'fahrenheit': 'Fahrenheit',
+        'kelvin': 'Kelvin',
+        'second': 'Second',
+        'millisecond': 'Millisecond',
+        'microsecond': 'Microsecond',
+        'nanosecond': 'Nanosecond',
+        'minute': 'Minute',
+        'hour': 'Hour',
+        'day': 'Day',
+        'week': 'Week',
+        'year': 'Year',
+        'liter': 'Liter',
+        'milliliter': 'Milliliter',
+        'microliter': 'Microliter',
+        'cubic_meter': 'Cubic meter',
+        'cubic_centimeter': 'Cubic centimeter',
+        'cubic_inch': 'Cubic inch',
+        'cubic_kilometer': 'Cubic kilometer',
+        'gallon': 'Gallon',
+        'pint': 'Pint',
+        'fluid_ounce': 'Fluid ounce',
+        'square_meter': 'Square meter',
+        'square_kilometer': 'Square kilometer',
+        'square_centimeter': 'Square centimeter',
+        'square_millimeter': 'Square millimeter',
+        'square_inch': 'Square inch',
+        'square_foot': 'Square foot',
+        'square_yard': 'Square yard',
+        'acre': 'Acre',
+        'hectare': 'Hectare',
+        'square_mile': 'Square mile',
+        'meter_per_second': 'Meter per second',
+        'kilometer_per_hour': 'Kilometer per hour',
+        'mile_per_hour': 'Mile per hour',
+        'knot': 'Knot',
+        'foot_per_second': 'Foot per second',
+        'joule': 'Joule',
+        'kilojoule': 'Kilojoule',
+        'megajoule': 'Megajoule',
+        'calorie': 'Calorie',
+        'kilocalorie': 'Kilocalorie',
+        'watt_hour': 'Watt-hour',
+        'kilowatt_hour': 'Kilowatt-hour',
+        'electronvolt': 'Electronvolt',
+        'btu': 'British thermal unit',
+        'pascal': 'Pascal',
+        'kilopascal': 'Kilopascal',
+        'hectopascal': 'Hectopascal',
+        'bar': 'Bar',
+        'atmosphere': 'Atmosphere',
+        'millimeter_of_mercury': 'Millimeter of mercury',
+        'psi': 'Pound per square inch',
+        'newton': 'Newton',
+        'kilonewton': 'Kilonewton',
+        'dyne': 'Dyne',
+        'kilogram_force': 'Kilogram-force',
+        'pound_force': 'Pound-force',
+        'poundal': 'Poundal',
         'restart_required': 'Restart required to apply changes',
         'history_title': 'History',
         'clear_history': 'clear',
@@ -156,6 +392,260 @@ LOCALES = {
         'pi_half': 'π/2',
         'units': 'Converter',
         'units_title': 'Unit Converter',
+        'extended_mode': 'Extended Mode',
+        'extended_mode_title': 'Extended Mode',
+        'pro_mode': 'Pro Mode',
+        'pro_mode_title': 'Pro Mode - Semiconductor Lifetime',
+        'semiconductor_lifetime': 'Semiconductor Lifetime',
+        'usage_time': 'Usage Time (hours)',
+        'current': 'Current (A)',
+        'min_temp': 'Minimum Temperature (°C)',
+        'max_temp': 'Maximum Temperature (°C)',
+        'avg_temp': 'Average Temperature (°C)',
+        'lifetime_result': 'Approximate Lifetime (hours)',
+        'remaining_lifetime': 'Remaining Lifetime (hours)',
+        'formula_select': 'Formula',
+        'formula_expression': 'Expression',
+        'compute': 'Compute',
+        'result': 'Result',
+        'precision_note': 'High precision up to 30 digits after decimal',
+        'current': 'Current',
+        'resistance': 'Resistance',
+        'mass': 'Mass',
+        'velocity': 'Velocity',
+        'amount_substance': 'Amount of substance',
+        'temperature': 'Temperature',
+        'gas_volume': 'Gas volume',
+        'formula_ohms_law': 'Ohm\'s law',
+        'formula_kinetic_energy': 'Kinetic energy',
+        'formula_ideal_gas_law': 'Ideal gas law',
+        'formula_mass_energy': 'Mass-energy equivalence',
+        'formula_molar_concentration': 'Molar concentration',
+        'formula_acceleration': 'Acceleration',
+        'formula_pressure_force': 'Pressure from force',
+        'formula_density': 'Density',
+        'formula_gravitational_force': 'Gravitational force',
+        'formula_potential_energy': 'Potential energy',
+        'formula_spring_energy': 'Spring energy',
+        'formula_wave_energy': 'Wave energy',
+        'formula_work': 'Work',
+        'formula_heat_capacity': 'Heat capacity',
+        'formula_power': 'Power',
+        'formula_ph': 'pH',
+        'height': 'Height',
+        'spring_constant': 'Spring constant',
+        'volume_liters': 'Volume (L)',
+        'specific_heat_capacity': 'Specific heat capacity',
+        'temperature_change': 'Temperature change',
+        'wavelength': 'Wavelength',
+        'hydrogen_ion_concentration': 'Hydrogen ion concentration',
+        'work': 'Work',
+    },
+    'uk': {
+        'window_title': 'Інженерний калькулятор',
+        'file_menu': 'Файл',
+        'exit': 'Вихід',
+        'view_menu': 'Перегляд',
+        'theme_menu': 'Тема',
+        'dark_theme': 'Темна',
+        'light_theme': 'Світла',
+        'lang_menu': 'Мова',
+        'russian': 'Російська',
+        'english': 'Англійська',
+        'ukrainian': 'Українська',
+        'distance': 'Довжина',
+        'weight': 'Вага',
+        'temperature': 'Температура',
+        'time': 'Час',
+        'volume': 'Об’єм',
+        'area': 'Площа',
+        'speed': 'Швидкість',
+        'energy': 'Енергія',
+        'pressure': 'Тиск',
+        'force': 'Сила',
+        'from': 'Від',
+        'to': 'До',
+        'meter': 'метр',
+        'kilometer': 'кілометр',
+        'centimeter': 'сантиметр',
+        'millimeter': 'міліметр',
+        'micrometer': 'мікрометр',
+        'nanometer': 'нанометр',
+        'inch': 'дюйм',
+        'foot': 'фут',
+        'yard': 'ярд',
+        'mile': 'міля',
+        'nautical_mile': 'морська миля',
+        'kilogram': 'кілограм',
+        'gram': 'грам',
+        'milligram': 'міліграм',
+        'microgram': 'мікрограм',
+        'pound': 'фунт',
+        'ounce': 'унція',
+        'stone': ' стоун',
+        'tonne': 'тонна',
+        'celsius': 'градус Цельсія',
+        'fahrenheit': 'градус Фаренгейта',
+        'kelvin': 'кельвін',
+        'second': 'секунда',
+        'millisecond': 'мілісекунда',
+        'microsecond': 'мікросекунда',
+        'nanosecond': 'наносекунда',
+        'minute': 'хвилина',
+        'hour': 'година',
+        'day': 'день',
+        'week': 'тиждень',
+        'year': 'рік',
+        'liter': 'літр',
+        'milliliter': 'мілілітр',
+        'microliter': 'мікролітр',
+        'cubic_meter': 'кубічний метр',
+        'cubic_centimeter': 'кубічний сантиметр',
+        'cubic_inch': 'кубічний дюйм',
+        'cubic_kilometer': 'кубічний кілометр',
+        'gallon': 'галон',
+        'pint': 'пінта',
+        'fluid_ounce': 'жидка унція',
+        'square_meter': 'квадратний метр',
+        'square_kilometer': 'квадратний кілометр',
+        'square_centimeter': 'квадратний сантиметр',
+        'square_millimeter': 'квадратний міліметр',
+        'square_inch': 'квадратний дюйм',
+        'square_foot': 'квадратний фут',
+        'square_yard': 'квадратний ярд',
+        'acre': 'акр',
+        'hectare': 'гектар',
+        'square_mile': 'квадратна миля',
+        'meter_per_second': 'метр на секунду',
+        'kilometer_per_hour': 'кілометр на годину',
+        'mile_per_hour': 'миля на годину',
+        'knot': 'вузол',
+        'foot_per_second': 'фут на секунду',
+        'joule': 'джоуль',
+        'kilojoule': 'кілоджоуль',
+        'megajoule': 'мегаджоуль',
+        'calorie': 'калорія',
+        'kilocalorie': 'кілокалорія',
+        'watt_hour': 'ват-година',
+        'kilowatt_hour': 'кіловат-година',
+        'electronvolt': 'електронвольт',
+        'btu': 'британська термальна одиниця',
+        'pascal': 'паскаль',
+        'kilopascal': 'кілопаскаль',
+        'hectopascal': 'гектопаскаль',
+        'bar': 'бар',
+        'atmosphere': 'атмосфера',
+        'millimeter_of_mercury': 'міліметр ртутного стовпа',
+        'psi': 'фунт на квадратний дюйм',
+        'newton': 'ньютон',
+        'kilonewton': 'кілоньютон',
+        'dyne': 'дин',
+        'kilogram_force': 'кілограм-сила',
+        'pound_force': 'фунт-сила',
+        'poundal': 'паундаль',
+        'restart_required': 'Потрібно перезапустити для застосування змін',
+        'history_title': 'Історія',
+        'clear_history': 'очистити',
+        'error': 'Помилка',
+        'memory': 'M',
+        'degrees': 'DEG',
+        'radians': 'RAD',
+        'inverse': 'INV',
+        'ans': 'ANS',
+        'clear': 'AC',
+        'delete': '⌫',
+        'equals': '=',
+        'plus': '+',
+        'minus': '−',
+        'multiply': '×',
+        'divide': '÷',
+        'modulo': 'mod',
+        'power': 'xⁿ',
+        'square': 'x²',
+        'sqrt': '√',
+        'cbrt': '∛',
+        'log': 'log',
+        'ln': 'ln',
+        'log2': 'log₂',
+        'exp': 'eˣ',
+        'pow10': '10ˣ',
+        'sin': 'sin',
+        'cos': 'cos',
+        'tan': 'tan',
+        'cot': 'ctg',
+        'sinh': 'sinh',
+        'cosh': 'cosh',
+        'tanh': 'tanh',
+        'pi': 'π',
+        'e_const': 'e',
+        'phi': 'φ',
+        'abs': '|x|',
+        'fact': 'n!',
+        'inv': '1/x',
+        'pct': '%',
+        'floor': '⌊x⌋',
+        'ceil': '⌈x⌉',
+        'round': 'rnd',
+        'neg': '±',
+        'dot': '.',
+        'ee': 'EE',
+        'mc': 'MC',
+        'mr': 'MR',
+        'mplus': 'M+',
+        'mminus': 'M−',
+        'deg_rad': 'DEG/RAD',
+        'inv_toggle': 'INV',
+        'pi_half': 'π/2',
+        'units': 'Конвертер',
+        'units_title': 'Конвертер одиниць',
+        'extended_mode': 'Розширений режим',
+        'extended_mode_title': 'Розширений режим',
+        'pro_mode': 'Pro Mode',
+        'pro_mode_title': 'Pro Mode - Час життя напівпровідника',
+        'semiconductor_lifetime': 'Час життя напівпровідника',
+        'usage_time': 'Час використання (години)',
+        'current': 'Струм (A)',
+        'min_temp': 'Мінімальна температура (°C)',
+        'max_temp': 'Максимальна температура (°C)',
+        'avg_temp': 'Середня температура (°C)',
+        'lifetime_result': 'Приблизний час життя (години)',
+        'remaining_lifetime': 'Залишковий час життя (години)',
+        'formula_select': 'Формула',
+        'formula_expression': 'Выраження',
+        'compute': 'Обчислити',
+        'result': 'Результат',
+        'precision_note': 'Висока точність до 30 знаків після коми',
+        'current': 'Струм',
+        'resistance': 'Опір',
+        'mass': 'Маса',
+        'velocity': 'Швидкість',
+        'amount_substance': 'Кількість речовини',
+        'temperature': 'Температура',
+        'gas_volume': 'Об’єм газу',
+        'formula_ohms_law': 'Закон Ома',
+        'formula_kinetic_energy': 'Кінетична енергія',
+        'formula_ideal_gas_law': 'Рівняння Менделєєва–Клапейрона',
+        'formula_mass_energy': 'Енергія маси',
+        'formula_molar_concentration': 'Молярна концентрація',
+        'formula_acceleration': 'Прискорення',
+        'formula_pressure_force': 'Тиск від сили',
+        'formula_density': 'Густина',
+        'formula_gravitational_force': 'Гравітаційна сила',
+        'formula_potential_energy': 'Потенціальна енергія',
+        'formula_spring_energy': 'Енергія пружини',
+        'formula_wave_energy': 'Енергія хвилі',
+        'formula_work': 'Робота',
+        'formula_heat_capacity': 'Теплоємність',
+        'formula_power': 'Потужність',
+        'formula_ph': 'pH',
+        'height': 'Висота',
+        'spring_constant': 'Жорсткість пружини',
+        'volume_liters': 'Об’єм (л)',
+        'specific_heat_capacity': 'Питома теплоємність',
+        'temperature_change': 'Зміна температури',
+        'wavelength': 'Довжина хвилі',
+        'hydrogen_ion_concentration': 'Концентрація іонів водню',
+        'work': 'Робота',
     }
 }
 
@@ -196,9 +686,10 @@ def get_text(key):
     return LOCALES.get(LANGUAGE, LOCALES['ru']).get(key, key)
 
 def load_settings():
-    global CURRENT_THEME, LANGUAGE
+    global CURRENT_THEME, LANGUAGE, EXTENDED_MODE_ENABLED
     theme_file = os.path.join(os.path.dirname(__file__), 'theme.txt')
     lang_file = os.path.join(os.path.dirname(__file__), 'lang.txt')
+    extended_file = os.path.join(os.path.dirname(__file__), 'extended_mode.txt')
     if os.path.exists(theme_file):
         try:
             with open(theme_file, 'r') as f:
@@ -209,6 +700,12 @@ def load_settings():
         try:
             with open(lang_file, 'r') as f:
                 LANGUAGE = f.read().strip()
+        except:
+            pass
+    if os.path.exists(extended_file):
+        try:
+            with open(extended_file, 'r') as f:
+                EXTENDED_MODE_ENABLED = f.read().strip() == '1'
         except:
             pass
 
@@ -229,6 +726,42 @@ def save_language(lang):
             f.write(lang)
     except:
         pass
+
+def save_extended_mode(enabled):
+    global EXTENDED_MODE_ENABLED
+    EXTENDED_MODE_ENABLED = bool(enabled)
+    try:
+        with open(EXTENDED_MODE_FILE, 'w') as f:
+            f.write('1' if EXTENDED_MODE_ENABLED else '0')
+    except:
+        pass
+
+
+def _decimal_literal_to_constructor(node):
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return ast.copy_location(
+            ast.Call(
+                func=ast.Name(id='Decimal', ctx=ast.Load()),
+                args=[ast.Constant(value=str(node.value))],
+                keywords=[]
+            ),
+            node
+        )
+    return node
+
+
+def _decimal_eval_expr(expr):
+    try:
+        tree = ast.parse(expr, mode='eval')
+        class DecimalTransformer(ast.NodeTransformer):
+            def visit_Constant(self, node):
+                return _decimal_literal_to_constructor(node)
+        tree = DecimalTransformer().visit(tree)
+        tree = ast.fix_missing_locations(tree)
+        compiled = compile(tree, '<decimal_eval>', 'eval')
+        return eval(compiled, {'__builtins__': {}}, {'Decimal': Decimal})
+    except Exception:
+        raise
 
 load_settings()
 theme = THEMES[CURRENT_THEME]
@@ -714,8 +1247,24 @@ class EngCalc(QMainWindow):
     }
 
     def _fmt(self, n):
+        if isinstance(n, Decimal):
+            if not n.is_finite():
+                return str(n)
+            if EXTENDED_MODE_ENABLED:
+                quant = Decimal('1e-30')
+                formatted = n.quantize(quant)
+                s = format(formatted, 'f').rstrip('0').rstrip('.')
+                return s or '0'
+            else:
+                n = float(n)
         if not math.isfinite(n):
             return str(n)
+        if EXTENDED_MODE_ENABLED:
+            d = Decimal(str(n))
+            quant = Decimal('1e-30')
+            formatted = d.quantize(quant)
+            s = format(formatted, 'f').rstrip('0').rstrip('.')
+            return s or '0'
         if abs(n) > 1e12 or (0 < abs(n) < 1e-7):
             return f"{n:.6e}"
         r = round(n, 12)
@@ -798,9 +1347,14 @@ class EngCalc(QMainWindow):
             return
         
         try:
-            val = float(eval(self.expr, {"__builtins__": {}}, {}))
+            if EXTENDED_MODE_ENABLED:
+                val = _decimal_eval_expr(self.expr)
+                val_float = float(val)
+            else:
+                val = float(eval(self.expr, {"__builtins__": {}}, {}))
+                val_float = val
             f = self.FN_MAP[fn]
-            res = f(self, val)
+            res = f(self, val_float)
             label = f"{fn}({self._fmt(val)})"
             self._add_history(label, res)
             self.last_res = res
@@ -826,7 +1380,10 @@ class EngCalc(QMainWindow):
             
             if last_op is None or last_op_pos <= 0:
                 # Нет оператора, просто конвертируем в проценты
-                val = float(eval(expr, {"__builtins__": {}}, {}))
+                if EXTENDED_MODE_ENABLED:
+                    val = _decimal_eval_expr(expr)
+                else:
+                    val = float(eval(expr, {"__builtins__": {}}, {}))
                 res = val / 100
                 self._add_history(f"{expr}%", res)
                 self.last_res = res
@@ -839,8 +1396,12 @@ class EngCalc(QMainWindow):
             left_expr = expr[:last_op_pos]
             right_expr = expr[last_op_pos+1:]
             
-            left_val = float(eval(left_expr, {"__builtins__": {}}, {}))
-            pct_val = float(eval(right_expr, {"__builtins__": {}}, {}))
+            if EXTENDED_MODE_ENABLED:
+                left_val = _decimal_eval_expr(left_expr)
+                pct_val = _decimal_eval_expr(right_expr)
+            else:
+                left_val = float(eval(left_expr, {"__builtins__": {}}, {}))
+                pct_val = float(eval(right_expr, {"__builtins__": {}}, {}))
             
             # Вычисляем процент от левого операнда
             pct_amount = (left_val * pct_val) / 100
@@ -870,11 +1431,17 @@ class EngCalc(QMainWindow):
             return
         orig = self.expr
         try:
-            result = eval(self.expr, {"__builtins__": {}}, {})
-            result = float(result)
-            if not math.isfinite(result):
-                self._update_display(str(result), orig + " =")
-                return
+            if EXTENDED_MODE_ENABLED:
+                result = _decimal_eval_expr(self.expr)
+                if not result.is_finite():
+                    self._update_display(str(result), orig + " =")
+                    return
+            else:
+                result = eval(self.expr, {"__builtins__": {}}, {})
+                result = float(result)
+                if not math.isfinite(result):
+                    self._update_display(str(result), orig + " =")
+                    return
             self._add_history(orig, result)
             self.last_res = result
             self._update_display(self._fmt(result), orig + " =")
@@ -980,8 +1547,17 @@ class EngCalc(QMainWindow):
         en_action = QAction(get_text('english'), self)
         en_action.triggered.connect(lambda: self.change_lang('en'))
         lang_menu.addAction(en_action)
+        uk_action = QAction(get_text('ukrainian'), self)
+        uk_action.triggered.connect(lambda: self.change_lang('uk'))
+        lang_menu.addAction(uk_action)
 
         view_menu.addSeparator()
+        self.extended_mode_action = QAction(get_text('extended_mode'), self)
+        self.extended_mode_action.setCheckable(True)
+        self.extended_mode_action.setChecked(EXTENDED_MODE_ENABLED)
+        self.extended_mode_action.toggled.connect(self.toggle_extended_mode)
+        view_menu.addAction(self.extended_mode_action)
+
         units_action = QAction(get_text('units'), self)
         units_action.triggered.connect(self.show_units_converter)
         view_menu.addAction(units_action)
@@ -997,6 +1573,15 @@ class EngCalc(QMainWindow):
     def show_units_converter(self):
         converter = UnitsConverter(self, theme, get_text)
         converter.exec_()
+
+    def toggle_extended_mode(self, enabled):
+        save_extended_mode(enabled)
+        if enabled:
+            self.show_extended_mode()
+
+    def show_extended_mode(self):
+        dialog = ExtendedModeDialog(self, theme, get_text)
+        dialog.exec_()
 
     def keyPressEvent(self, event):
         key = event.key()
