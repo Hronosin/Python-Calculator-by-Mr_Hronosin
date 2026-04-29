@@ -1,40 +1,58 @@
-# Школьный калькулятор
+```markdown
+# Calculator (School Project)
 
-Простой калькулятор на PyQt5 для школьного проекта. Подходит для быстрого запуска на компьютере и проверки базовых арифметических выражений.
+A simple calculator built with Python and PyQt5. Made as a school project.
 
-## Быстрый старт
+## Requirements
 
-1. Установите PyQt5:
+- Python 3.7+
+- PyQt5 >= 5.15.0
+- matplotlib >= 3.5.0
+
+## Installation
+
+1. Make sure Python 3.x is installed
+2. Install the dependencies:
+
 ```bash
-pip install PyQt5
+pip install PyQt5>=5.15.0 matplotlib>=3.5.0
 ```
 
-2. Запустите программу:
+3. Run the program:
+
 ```bash
 python main.py
 ```
 
-## Что внутри
-
-- один простой графический интерфейс
-- базовые арифметические операции
-- поддержка ввода с клавиатуры
-- файл `main.py` как точка входа
-- небольшая структура проекта для учебного примера
-
-## Структура проекта
+## Project Structure
 
 ```
-calculator/
-├── __init__.py
-├── config.py
-├── logic.py
-├── styles.py
-└── ui.py
-main.py
-README.md
+main.py                    # Entry point
+engineering_calculator.py  # Core calculator logic
+extended_mode.py           # Extended mode
+units_converter.py         # Units converter
+README.md                  # Documentation
 ```
 
-## Примечание
+## Usage
 
-Это учебный проект, предназначенный для демонстрации базовых навыков разработки на Python и PyQt5. Все, что нужно для запуска — это установленный Python и PyQt5.
+After launching, a calculator window will open. Enter numbers and operations using the buttons or your keyboard.
+
+## Interface Language
+
+The calculator supports three languages. Set the `CALC_LANG` environment variable before running to choose a language:
+
+```bash
+# Ukrainian (default)
+export CALC_LANG=uk
+python main.py
+
+# Russian
+export CALC_LANG=ru
+python main.py
+
+# English
+export CALC_LANG=en
+python main.py
+```
+```
