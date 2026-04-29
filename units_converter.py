@@ -35,7 +35,30 @@ class UnitsConverter(QDialog):
         self.get_text = get_text or (lambda x: x)
         self.setWindowTitle(self.get_text("units_title"))
         self.setMinimumSize(500, 400)
+        self._apply_theme()
         self.setup_ui()
+
+    def _apply_theme(self):
+        text = self.theme.get('TEXT_WHITE', '#eaeaf0')
+        muted = self.theme.get('TEXT_MUTED', '#8888a0')
+        panel = self.theme.get('PANEL_BG', '#22222a')
+        display = self.theme.get('DISPLAY_BG', '#14141a')
+        border = self.theme.get('BORDER', '#3a3a4a')
+        hover = self.theme.get('CARD_HOVER', '#333340')
+        self.setStyleSheet(f"""
+            QDialog {{ background: {panel}; color: {text}; }}
+            QLabel {{ color: {text}; }}
+            QLineEdit, QTextEdit, QComboBox, QListWidget {{
+                color: {text};
+                background: {display};
+                border: 1px solid {border};
+                border-radius: 6px;
+            }}
+            QComboBox::drop-down {{ border-left: 1px solid {border}; }}
+            QComboBox QAbstractItemView {{ background: {display}; color: {text}; selection-background-color: {hover}; }}
+            QPushButton {{ color: {text}; background: {panel}; border: 1px solid {border}; border-radius: 6px; }}
+            QPushButton:hover {{ background: {hover}; }}
+        """)
 
     def _get_unit_label(self, code):
         label_key = self.UNIT_LABELS.get(code)
