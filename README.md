@@ -1,58 +1,56 @@
 ```markdown
-# Calculator (School Project)
+# Simple School Calculator
 
-A simple calculator built with Python and PyQt5. Made as a school project.
+A minimal calculator application made as a school project. It is intended only for download and quick launch.
 
 ## Requirements
 
-- Python 3.7+
-- PyQt5 >= 5.15.0
-- matplotlib >= 3.5.0
+- Python 3.7 or newer
+- PyQt5
+- matplotlib
 
 ## Installation
 
-1. Make sure Python 3.x is installed
-2. Install the dependencies:
+1. Install Python if needed.
+2. Install dependencies:
 
 ```bash
-pip install PyQt5>=5.15.0 matplotlib>=3.5.0
+pip install PyQt5 matplotlib
 ```
 
-3. Run the program:
+3. Start the calculator:
 
 ```bash
 python main.py
 ```
 
-## Project Structure
+## Dependencies
+
+This project uses:
+
+- `PyQt5` for the graphical interface
+- `matplotlib` for simple display support
+
+## Project Architecture
+
+The calculator is organized as a small school project with a few separate files:
 
 ```
-main.py                    # Entry point
-engineering_calculator.py  # Core calculator logic
-extended_mode.py           # Extended mode
-units_converter.py         # Units converter
-README.md                  # Documentation
+main.py                  # Program entry point
+engineering_calculator.py# Main calculator logic
+extended_mode.py         # Extra mode logic
+units_converter.py       # Units converter logic
+README.md                # Project instructions
+requirements.txt         # Dependency list
 ```
 
-## Usage
+## How to Use
 
-After launching, a calculator window will open. Enter numbers and operations using the buttons or your keyboard.
+Run `python main.py`, then use the calculator window to enter numbers and operations. The interface is designed to be easy to understand.
 
-## Interface Language
+## Notes
 
-The calculator supports three languages. Set the `CALC_LANG` environment variable before running to choose a language:
-
-```bash
-# Ukrainian (default)
-export CALC_LANG=uk
-python main.py
-
-# Russian
-export CALC_LANG=ru
-python main.py
-
-# English
-export CALC_LANG=en
-python main.py
-```
+- This description presents the program as a simple school calculator.
+- It is written for easy download and run.
+- The README does not claim advanced functionality.
 ```

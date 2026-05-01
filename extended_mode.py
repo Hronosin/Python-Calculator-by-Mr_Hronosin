@@ -1,6 +1,6 @@
 """Extended Mode for high-precision scientific and chemical calculations."""
 
-from decimal import Decimal, InvalidOperation, getcontext
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP, getcontext
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QWidget, QFormLayout, QGroupBox, QSlider, QListWidget, QTabWidget,
@@ -18,7 +18,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import statistics
 
-getcontext().prec = 50
+getcontext().prec = 150
 
 FORMULAS = [
     {
@@ -577,12 +577,25 @@ FORMULAS = [
 
 def parse_decimal(text: str) -> Decimal:
     text = text.strip().replace(',', '.')
-    return Decimal(text) if text else Decimal('0')
+    if not text:
+        return Decimal('0')
+    if text in ('.', '-', '+', '+.', '-.'):
+        raise InvalidOperation('Invalid numeric input')
+    try:
+        return Decimal(text)
+    except InvalidOperation:
+        raise InvalidOperation('Invalid numeric input')
 
 
-def format_decimal(value: Decimal) -> str:
-    quant = Decimal('1e-30')
-    result = value.quantize(quant)
+def format_decimal(value: Decimal, precision: int = 30) -> str:
+    precision = max(1, min(100, precision))
+    if value.is_nan() or value.is_infinite():
+        raise InvalidOperation('Result is not a finite number')
+    quant = Decimal(1).scaleb(-precision)
+    try:
+        result = value.quantize(quant, rounding=ROUND_HALF_UP)
+    except InvalidOperation:
+        result = value.normalize()
     return format(result, 'f')
 
 
@@ -591,6 +604,7 @@ class ExtendedModeDialog(QDialog):
         super().__init__(parent)
         self.get_text = get_text or (lambda x: x)
         self.theme = theme or {}
+        self.precision = 2
         self.sort_ascending = True
         self.sorted_formulas = []
         self.search_query = ''
@@ -674,6 +688,33 @@ class ExtendedModeDialog(QDialog):
         self.params_form.setLabelAlignment(Qt.AlignRight)
         self.params_form.setFormAlignment(Qt.AlignLeft)
         layout.addWidget(self.params_group)
+
+        precision_widget = QWidget()
+        precision_layout = QHBoxLayout(precision_widget)
+        precision_layout.setContentsMargins(0, 0, 0, 0)
+        precision_layout.setSpacing(8)
+
+        self.precision_label = QLabel('Precision:')
+        self.precision_label.setFont(QFont('Consolas', 10))
+        precision_layout.addWidget(self.precision_label)
+
+        self.precision_slider = QSlider(Qt.Horizontal)
+        self.precision_slider.setMinimum(1)
+        self.precision_slider.setMaximum(100)
+        self.precision_slider.setValue(self.precision)
+        self.precision_slider.setTickInterval(10)
+        self.precision_slider.setTickPosition(QSlider.TicksBelow)
+        self.precision_slider.valueChanged.connect(self._on_precision_slider_changed)
+        precision_layout.addWidget(self.precision_slider, stretch=1)
+
+        self.precision_input = QLineEdit(str(self.precision))
+        self.precision_input.setFont(QFont('Consolas', 10))
+        self.precision_input.setFixedWidth(55)
+        self.precision_input.setAlignment(Qt.AlignCenter)
+        self.precision_input.editingFinished.connect(self._on_precision_text_changed)
+        precision_layout.addWidget(self.precision_input)
+
+        layout.addWidget(precision_widget)
 
         self.btn_compute = QPushButton(self.get_text('compute'))
         self.btn_compute.setFont(QFont('Consolas', 11))
@@ -760,6 +801,22 @@ class ExtendedModeDialog(QDialog):
             self.formula_list.blockSignals(False)
         self._refresh_formula()
 
+    def _on_precision_slider_changed(self, value):
+        self.precision = max(1, min(100, value))
+        self.precision_input.setText(str(self.precision))
+
+    def _on_precision_text_changed(self):
+        try:
+            value = int(self.precision_input.text())
+        except ValueError:
+            value = self.precision
+        value = max(1, min(100, value))
+        self.precision = value
+        self.precision_input.setText(str(self.precision))
+        self.precision_slider.blockSignals(True)
+        self.precision_slider.setValue(self.precision)
+        self.precision_slider.blockSignals(False)
+
     def _filter_formulas(self):
         self.search_query = self.search_input.text().strip()
         self._populate_formula_list()
@@ -823,7 +880,7 @@ class ExtendedModeDialog(QDialog):
                 values[code] = parse_decimal(self.param_inputs[code].text())
 
             result = formula['compute'](values)
-            formatted = format_decimal(result)
+            formatted = format_decimal(result, precision=self.precision)
             unit = formula.get('unit', '')
             self.lbl_result.setText(f"{self.get_text('result')}: {formatted} {unit}")
             self.error_label.setText('')
